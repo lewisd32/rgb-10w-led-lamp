@@ -45,13 +45,6 @@ byte cmdBuf[CMD_BUF_LEN];
 const int MAX_ERRORS = 5;
 
 
-const byte START = 1;
-const byte CHECK = 2;
-const byte GET_LEN = 3;
-const byte NEXT = 4;
-const byte DONE = 5;
-
-
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, PIN_NEO, NEO_GRB + NEO_KHZ800);
 
 Lamp lamp(ledUpdateFunc);

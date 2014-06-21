@@ -3,6 +3,12 @@
 
 #include "Arduino.h"
 
+const byte START = 1;
+const byte CHECK = 2;
+const byte GET_LEN = 3;
+const byte NEXT = 4;
+const byte DONE = 5;
+
 struct  __attribute__((__packed__)) PeripheralCommand {
   static const uint8_t ADJUSTMENT_RED = 1;
   static const uint8_t ADJUSTMENT_HUE = 1;
@@ -46,3 +52,4 @@ struct  __attribute__((__packed__)) PeripheralCommand {
 };
 
 #endif
+// vim: set tabstop=2 shiftwidth=2 softtabstop=2 smarttab expandtab:
