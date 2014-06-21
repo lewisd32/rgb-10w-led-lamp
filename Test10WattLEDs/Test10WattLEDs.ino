@@ -27,7 +27,7 @@ const int FPS = 60;
 
 Adafruit_TLC59711 tlc = Adafruit_TLC59711(NUM_TLC59711, clock, data);
 
-Lamp lamp;
+Lamp lamp(ledUpdateFunc);
 PeripheralCommand cmd;
 
 void setup() {
@@ -36,14 +36,10 @@ void setup() {
 
   pinMode(BUTTON_PIN, INPUT);
 
-  // Turn all the LEDs off initially.
   tlc.begin();
-  for (int i = 0; i < 12; ++i) {
-    tlc.setLED(i, 65535, 65535, 65535);
-  }
-  tlc.write();
   
-  lamp.init(ledUpdateFunc);
+  lamp.init();
+  tlc.write(); // Turn all the LEDs off initially.
   
 
   for (int i = 0; i < 12; ++i) {

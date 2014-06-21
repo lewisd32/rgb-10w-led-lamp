@@ -3,6 +3,9 @@
 
 #include "Arduino.h"
 
+typedef void (*LedUpdateFunc)(uint8_t, uint16_t, uint16_t, uint16_t);
+
+
 struct Lamp {
   const static int maxPeripherals = 10;
   Peripheral peripheral[maxPeripherals];
@@ -12,21 +15,18 @@ struct Lamp {
   static const int16_t ledAngle = (int16_t)360*factor/ledCount;
   static const int16_t ledHalfAngle = ledAngle / 2;
 
-  void (*ledUpdateFunc)(uint8_t, uint16_t, uint16_t, uint16_t);
+  const LedUpdateFunc ledUpdateFunc;
 
-  Lamp() : ledUpdateFunc(NULL) {
+  Lamp(LedUpdateFunc ledUpdateFunc) : ledUpdateFunc(ledUpdateFunc) {
     for (int i = 0; i < maxPeripherals; ++i) {
       peripheral[i].port = i;
     }
   }
 
-  void init(void (*ledUpdateFunc)(uint8_t, uint16_t, uint16_t, uint16_t)) {
-    this->ledUpdateFunc = ledUpdateFunc;
+  void init() {
     for (uint8_t led = 0; led < ledCount; ++led) {
       ledUpdateFunc(led, 0, 0, 0);
     }
-    //strip.begin();
-    //strip.show(); // Initialize all pixels to 'off'
   }
 
 

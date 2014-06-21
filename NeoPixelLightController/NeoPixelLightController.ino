@@ -49,7 +49,7 @@ const byte DONE = 5;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, PIN_NEO, NEO_GRB + NEO_KHZ800);
 
-Lamp lamp;
+Lamp lamp(ledUpdateFunc);
 
 void setup() {
   pinMode(PIN_PS_A, OUTPUT);
@@ -61,6 +61,7 @@ void setup() {
   pinMode(PIN_MOSI, OUTPUT);
   pinMode(PIN_SCK, OUTPUT);
   pinMode(PIN_PD, INPUT);
+  pinMode(PIN_RTS, INPUT);
   pinMode(PIN_ERROR, OUTPUT);
 
   SPI.begin();
@@ -69,9 +70,9 @@ void setup() {
   Serial.begin(115200);
 
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
   
-  lamp.init(ledUpdateFunc);
+  lamp.init(); // Initialize all pixels to 'off'
+  strip.show();
 
   test();  
 }
