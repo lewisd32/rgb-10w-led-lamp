@@ -25,7 +25,6 @@ void setup() {
   pinMode(PIN_RTS, OUTPUT);
   
   Serial.begin(115200);
-  delay(1000);
 
   // turn on SPI in slave mode
   SPCR |= _BV(SPE);
