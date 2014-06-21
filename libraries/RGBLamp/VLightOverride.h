@@ -16,6 +16,16 @@ struct VLightOverride {
     hsb[1] = 0;
     hsb[2] = 0;
   }
+
+  void reset() {
+    angle = 0;
+    active = false;
+    absoluteColor = false;
+    absoluteAngle = false;
+    hsb[0] = 0;
+    hsb[1] = 0;
+    hsb[2] = 0;
+  }
   
 };
 

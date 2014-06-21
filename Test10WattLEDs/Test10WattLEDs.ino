@@ -54,7 +54,7 @@ void setup() {
     cmd.hsb[1] = 20;
     cmd.hsb[2] = MIN_BRIGHTNESS;
     cmd.angle = 15*i;
-    lamp.peripheral[0].applyPeripheralCommand(cmd);
+    lamp.applyPeripheralCommand(0, cmd);
   }
   
   cmd.light = 0;
@@ -101,7 +101,7 @@ void loop() {
   }
   
   // Execute the command we just set the brightness on
-  lamp.peripheral[0].applyPeripheralCommand(cmd);
+  lamp.applyPeripheralCommand(0, cmd);
   
   lamp.updateLeds();
   tlc.write();

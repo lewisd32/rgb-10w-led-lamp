@@ -16,6 +16,11 @@
 #include <Peripheral.h>
 #include <Lamp.h>
 
+#define debugFrameTime false
+#define debugPeripheralIOTime false
+#define debugPeripheralReady false
+#define debugPeripheralTimeout true
+
 const int PIN_PS_A = 4; // Peripheral Select A
 const int PIN_PS_B = 3; // Peripheral Select 2
 const int PIN_PS_C = 2; // Peripheral Select 3
@@ -52,6 +57,12 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, PIN_NEO, NEO_GRB + NEO_KHZ800);
 Lamp lamp(ledUpdateFunc);
 
 void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("Starting");
+  Serial.print("Size of VLight: ");
+  Serial.println(sizeof(VLight));
+  
   pinMode(PIN_PS_A, OUTPUT);
   pinMode(PIN_PS_B, OUTPUT);
   pinMode(PIN_PS_C, OUTPUT);
@@ -64,10 +75,9 @@ void setup() {
   pinMode(PIN_RTS, INPUT);
   pinMode(PIN_ERROR, OUTPUT);
 
-  SPI.begin();
   SPI.setClockDivider(SPI_CLOCK_DIV8);
+  SPI.begin();
   
-  Serial.begin(115200);
 
   strip.begin();
   
@@ -111,11 +121,11 @@ void loop() {
     digitalWrite(PIN_PS_C, hasMaskToLevel(port, 0x04));
     digitalWrite(PIN_PE, LOW);
     
-    Peripheral& peripheral = lamp.peripheral[port];
     int hasPeripheral = digitalRead(PIN_PD) == HIGH;
     if (hasPeripheral) {
 //      Serial.print("Reading commands from peripheral ");
 //      Serial.println(port);
+      lamp.connect(port);
       digitalWrite(PIN_CS, LOW);
       int16_t len = readCmds();
       digitalWrite(PIN_CS, HIGH);
@@ -124,13 +134,11 @@ void loop() {
       if (len == -1) {
         // not ready
       } else if (len >= 0) {
-        if (peripheral.errors > 0) {
-          peripheral.errors--;
-        }
-        byte offset = 0;
-        while (offset + sizeof(PeripheralCommand) <= len) {
+        lamp.errors(-1);
+        uint8_t offset = 0;
+        while (offset + sizeof(PeripheralCommand) <= (uint8_t)len) {
           PeripheralCommand *pCmd = (PeripheralCommand*)(&cmdBuf[offset]);
-          peripheral.applyPeripheralCommand(*pCmd);
+          lamp.applyPeripheralCommand(port, *pCmd);
           offset += sizeof(PeripheralCommand);
         }
       } else {
@@ -138,21 +146,21 @@ void loop() {
           transferWait(5);
           SPI.transfer(DONE);
         }
-        if (peripheral.errors > MAX_ERRORS) {
+        if (lamp.errors(port) > MAX_ERRORS) {
           Serial.println("fatal error");
           digitalWrite(PIN_ERROR, HIGH);
           errorStop = millis() + 500;
-          peripheral.disconnect();
+          lamp.disconnect(port);
         } else {
-          peripheral.errors++;
+          lamp.errors(port, +1);
           digitalWrite(PIN_ERROR, HIGH);
           errorStop = millis() + 100;
           Serial.print("errors ");
-          Serial.println(peripheral.errors);
+          Serial.println(lamp.errors(port));
         }
       }
     } else {
-      peripheral.disconnect();
+      lamp.disconnect(port);
     }
     digitalWrite(PIN_PE, HIGH);
   }
@@ -162,8 +170,10 @@ void loop() {
   
   uint32_t now = millis();
   if (now < endFrame) {
-    Serial.print("Frame time: ");
-    Serial.println(now - start);
+    if (debugFrameTime) {
+      Serial.print("Frame time: ");
+      Serial.println(now - start);
+    }
     while (millis() < endFrame) {
       // wait for frame end
     }
@@ -191,8 +201,10 @@ int16_t readCmds() {
   }
   byte ready = SPI.transfer(CHECK);
   if (ready != 42) {
-    Serial.print("Not ready ");
-    Serial.println(ready);
+    if (debugPeripheralReady) {
+      Serial.print("Not ready ");
+      Serial.println(ready);
+    }
     return -1;
   }
   if (!transferWait(2)) {
@@ -224,8 +236,10 @@ int16_t readCmds() {
   sum = sum - checksumHigh - checksumLow;
   uint16_t checksum = ((uint16_t)checksumHigh << 8) | checksumLow;
   uint32_t endMicros = micros();
-  Serial.print(endMicros - startMicros);
-  Serial.println("us");
+  if (debugPeripheralIOTime) {
+    Serial.print(endMicros - startMicros);
+    Serial.println("us");
+  }
   if (sum != checksum) {
     /*
     for (int i = 0; i < len; ++i) {
@@ -257,7 +271,9 @@ bool transferWait(byte debugCode) {
   while((PORTB & 0x01) > 0) {
 //    Serial.println(debugCode);
     if ((int32_t)micros() - timeEnd > 0) {
-      Serial.println("timeout");
+      if (debugPeripheralTimeout) {
+        Serial.println("timeout");
+      }
       return false;
     }
   }

@@ -4,18 +4,25 @@
 #include "Arduino.h"
 
 struct VLight {
-  uint16_t id;
+  uint8_t id;
   uint8_t hsb[3];
   uint16_t angle : 9;
   VLightOverride override;
-  VLight* prev;
-  VLight* next;
 
-  VLight(uint16_t id)
-  : id(id), angle(0), override(), prev(NULL), next(NULL) {
+  VLight(uint16_t id = 0)
+  : id(id), angle(0), override() {
     hsb[0] = 0;
     hsb[1] = 0;
     hsb[2] = 0;
+  }
+
+  void reset(uint8_t id) {
+    this->id = id;
+    hsb[0] = 0;
+    hsb[1] = 0;
+    hsb[2] = 0;
+    angle = 0;
+    override.reset();
   }
   
   void dump() {
