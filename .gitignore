@@ -1,0 +1,5 @@
+*~
+*.swp
+libraries/Adafruit_NeoPixel
+libraries/Adafruit_TLC59711
+libraries/hsl2rgb
