@@ -27,6 +27,7 @@ const int FPS = 60;
 
 Adafruit_TLC59711 tlc = Adafruit_TLC59711(NUM_TLC59711, clock, data);
 
+void ledUpdateFunc(uint8_t led, uint16_t red, uint16_t green, uint16_t blue);
 Lamp lamp(ledUpdateFunc);
 PeripheralCommand cmd;
 

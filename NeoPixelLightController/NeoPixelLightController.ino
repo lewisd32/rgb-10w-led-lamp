@@ -47,6 +47,9 @@ const int MAX_ERRORS = 5;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, PIN_NEO, NEO_GRB + NEO_KHZ800);
 
+
+void ledUpdateFunc(uint8_t led, uint16_t red, uint16_t green, uint16_t blue);
+
 Lamp lamp(ledUpdateFunc);
 
 void setup() {
