@@ -18,8 +18,13 @@
 
 #define debugFrameTime false
 #define debugPeripheralIOTime false
+#define debugPeripheralIOLen false
 #define debugPeripheralReady false
 #define debugPeripheralTimeout true
+#define debugLampCommandProcessingTime false
+#define debugLEDUpdateTime true
+#define debugLEDShowTime false
+
 
 const int PIN_PS_A = 4; // Peripheral Select A
 const int PIN_PS_B = 3; // Peripheral Select 2
@@ -105,9 +110,9 @@ void ledUpdateFunc(uint8_t led, uint16_t red, uint16_t green, uint16_t blue) {
 uint32_t errorStop = 0;
 
 void loop() {
-  uint32_t start = millis();
-  uint32_t endFrame = start + (1000/FPS);
-  if (millis() > errorStop) {
+  uint32_t start = micros();
+  uint32_t endFrame = start + (1000000/FPS);
+  if (micros() > errorStop) {
     digitalWrite(PIN_ERROR, LOW);
   }
 //  Serial.println("Starting frame");
@@ -123,19 +128,36 @@ void loop() {
 //      Serial.println(port);
       lamp.connect(port);
       digitalWrite(PIN_CS, LOW);
+      uint32_t startMicros = micros();
       int16_t len = readCmds();
       digitalWrite(PIN_CS, HIGH);
-//      Serial.print("cmds len ");
-//      Serial.println(len);
+      uint32_t endMicros = micros();
+      if (debugPeripheralIOTime) {
+        Serial.print("readCmds: ");
+        Serial.print(endMicros - startMicros);
+        Serial.println("us");
+      }
+      if (debugPeripheralIOLen) {
+        Serial.print("cmds len ");
+        Serial.println(len);
+      }
       if (len == -1) {
         // not ready
       } else if (len >= 0) {
+//        Serial.println("OK");
         lamp.errors(port, -1);
+        uint32_t startMicros = micros();
         uint8_t offset = 0;
         while (offset + sizeof(PeripheralCommand) <= (uint8_t)len) {
           PeripheralCommand *pCmd = (PeripheralCommand*)(&cmdBuf[offset]);
           lamp.applyPeripheralCommand(port, *pCmd);
           offset += sizeof(PeripheralCommand);
+        }
+        uint32_t endMicros = micros();
+        if (debugLampCommandProcessingTime) {
+          Serial.print("applyPeripheralCommands: ");
+          Serial.print(endMicros - startMicros);
+          Serial.println("us");
         }
       } else {
         lamp.errors(port, +1);
@@ -151,7 +173,7 @@ void loop() {
         Serial.println(" errors)");
 
         digitalWrite(PIN_ERROR, HIGH);
-        errorStop = millis() + 500;
+        errorStop = micros() + 500000;
 
         if (lamp.errors(port) > MAX_ERRORS) {
           Serial.println("Reached max errors");
@@ -163,17 +185,37 @@ void loop() {
     }
     digitalWrite(PIN_PE, HIGH);
   }
-  
-  lamp.updateLeds();
-  strip.show();
-  
-  uint32_t now = millis();
+
+  {
+    uint32_t startMicros = micros();
+    lamp.updateLeds();
+    uint32_t endMicros = micros();
+    if (debugLEDUpdateTime) {
+      Serial.print("updateLeds: ");
+      Serial.print(endMicros - startMicros);
+      Serial.println("us");
+    }
+  }
+
+  {
+    uint32_t startMicros = micros();
+    strip.show();
+    uint32_t endMicros = micros();
+    if (debugLEDShowTime) {
+      Serial.print("strip.show: ");
+      Serial.print(endMicros - startMicros);
+      Serial.println("us");
+    }
+  }
+
+  uint32_t now = micros();
   if (now < endFrame) {
     if (debugFrameTime) {
       Serial.print("Frame time: ");
-      Serial.println(now - start);
+      Serial.print(now - start);
+      Serial.println("us");
     }
-    while (millis() < endFrame) {
+    while (micros() < endFrame) {
       // wait for frame end
     }
   } else {
@@ -193,7 +235,6 @@ int hasMaskToLevel(byte input, byte mask) {
 
 
 int16_t readCmds() {
-  uint32_t startMicros = micros();
   SPI.transfer(START);
   if (!transferWait(1)) {
     return -2;
@@ -234,11 +275,6 @@ int16_t readCmds() {
   byte checksumLow = cmdBuf[len-1];
   sum = sum - checksumHigh - checksumLow;
   uint16_t checksum = ((uint16_t)checksumHigh << 8) | checksumLow;
-  uint32_t endMicros = micros();
-  if (debugPeripheralIOTime) {
-    Serial.print(endMicros - startMicros);
-    Serial.println("us");
-  }
   if (sum != checksum) {
     /*
     for (int i = 0; i < len; ++i) {
