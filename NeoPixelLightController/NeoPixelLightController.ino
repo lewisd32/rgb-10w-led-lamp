@@ -138,21 +138,24 @@ void loop() {
           offset += sizeof(PeripheralCommand);
         }
       } else {
+        lamp.errors(port, +1);
         if (len == -100) {
           transferWait(5);
           SPI.transfer(DONE);
         }
+
+        Serial.print("error ");
+        Serial.print(len);
+        Serial.print(" (");
+        Serial.print(lamp.errors(port));
+        Serial.println(" errors)");
+
+        digitalWrite(PIN_ERROR, HIGH);
+        errorStop = millis() + 500;
+
         if (lamp.errors(port) > MAX_ERRORS) {
-          Serial.println("fatal error");
-          digitalWrite(PIN_ERROR, HIGH);
-          errorStop = millis() + 500;
+          Serial.println("Reached max errors");
           lamp.disconnect(port);
-        } else {
-          lamp.errors(port, +1);
-          digitalWrite(PIN_ERROR, HIGH);
-          errorStop = millis() + 100;
-          Serial.print("errors ");
-          Serial.println(lamp.errors(port));
         }
       }
     } else {
