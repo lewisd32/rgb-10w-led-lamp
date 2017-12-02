@@ -130,7 +130,7 @@ void loop() {
       if (len == -1) {
         // not ready
       } else if (len >= 0) {
-        lamp.errors(-1);
+        lamp.errors(port, -1);
         uint8_t offset = 0;
         while (offset + sizeof(PeripheralCommand) <= (uint8_t)len) {
           PeripheralCommand *pCmd = (PeripheralCommand*)(&cmdBuf[offset]);
