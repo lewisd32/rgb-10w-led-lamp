@@ -204,21 +204,21 @@ int16_t readCmds() {
     return -1;
   }
   if (!transferWait(2)) {
-    return -2;
+    return -3;
   }
   byte len = SPI.transfer(GET_LEN);
 //  Serial.print("len = ");
 //  Serial.println(len);
   if (len > CMD_BUF_LEN) {
-    return -3;
+    return -4;
   }
   if (len < 2) {
-    return -4;
+    return -5;
   }
   uint16_t sum = len - 2;
   for (int i = 0; i < len; ++i) {
     if (!transferWait(3)) {
-      return -2;
+      return -6;
     }
     byte val = SPI.transfer(NEXT);
     cmdBuf[i] = val;
@@ -254,7 +254,7 @@ int16_t readCmds() {
     return -100;
   }
   if (!transferWait(4)) {
-    return -2;
+    return -7;
   }
   SPI.transfer(DONE);
   return len - 2;
